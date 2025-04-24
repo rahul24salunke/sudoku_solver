@@ -1,70 +1,81 @@
-public class Sudoku2DSolver {
-    static final int N = 9;
-    static int[][] board = {
-        {5, 3, 0, 0, 7, 0, 0, 0, 0},
-        {6, 0, 0, 1, 9, 5, 0, 0, 0},
-        {0, 9, 8, 0, 0, 0, 0, 6, 0},
-        {8, 0, 0, 0, 6, 0, 0, 0, 3},
-        {4, 0, 0, 8, 0, 3, 0, 0, 1},
-        {7, 0, 0, 0, 2, 0, 0, 0, 6},
-        {0, 6, 0, 0, 0, 0, 2, 8, 0},
-        {0, 0, 0, 4, 1, 9, 0, 0, 5},
-        {0, 0, 0, 0, 8, 0, 0, 7, 9}
+public class Sudoku3D {
+    static final int SIZE = 3;
+    static final int NUM_VALUES = 9;
+
+    // 3D board (x, y, z)
+    static int[][][] board = {
+        {   // Layer z = 0
+            {1, 0, 0},
+            {0, 2, 0},
+            {0, 0, 3}
+        },
+        {   // Layer z = 1
+            {0, 4, 0},
+            {0, 0, 5},
+            {0, 0, 0}
+        },
+        {   // Layer z = 2
+            {0, 0, 6},
+            {0, 0, 0},
+            {7, 0, 0}
+        }
     };
 
     public static void main(String[] args) {
-        if (solveSudoku()) {
-            System.out.println("✅ Sudoku Solved:");
+        if (solve(0, 0, 0)) {
             printBoard();
         } else {
-            System.out.println("❌ No solution exists.");
+            System.out.println("No solution found.");
         }
     }
 
-    static boolean solveSudoku() {
-        for (int row = 0; row < N; row++) {
-            for (int col = 0; col < N; col++) {
-                if (board[row][col] == 0) {
-                    for (int num = 1; num <= 9; num++) {
-                        if (isValid(row, col, num)) {
-                            board[row][col] = num;
+    static boolean solve(int x, int y, int z) {
+        if (x == SIZE) return true;
+        int nextX = (x + 1) % SIZE;
+        int nextY = (nextX == 0) ? (y + 1) % SIZE : y;
+        int nextZ = (nextX == 0 && nextY == 0) ? z + 1 : z;
 
-                            if (solveSudoku()) return true;
+        if (z >= SIZE) return true;
 
-                            board[row][col] = 0; // backtrack
-                        }
-                    }
-                    return false; // no valid number found
-                }
+        if (board[x][y][z] != 0) {
+            return solve(nextX, nextY, nextZ);
+        }
+
+        for (int num = 1; num <= NUM_VALUES; num++) {
+            if (isSafe(x, y, z, num)) {
+                board[x][y][z] = num;
+                if (solve(nextX, nextY, nextZ)) return true;
+                board[x][y][z] = 0;
             }
         }
-        return true; // puzzle solved
+
+        return false;
     }
 
-    static boolean isValid(int row, int col, int num) {
-        // Row and column check
-        for (int i = 0; i < N; i++) {
-            if (board[row][i] == num || board[i][col] == num)
-                return false;
-        }
+    static boolean isSafe(int x, int y, int z, int num) {
+        // Check row (x-axis)
+        for (int i = 0; i < SIZE; i++)
+            if (board[i][y][z] == num) return false;
 
-        // 3x3 box check
-        int startRow = row - row % 3;
-        int startCol = col - col % 3;
+        // Check column (y-axis)
+        for (int i = 0; i < SIZE; i++)
+            if (board[x][i][z] == num) return false;
 
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 3; j++)
-                if (board[startRow + i][startCol + j] == num)
-                    return false;
+        // Check depth (z-axis)
+        for (int i = 0; i < SIZE; i++)
+            if (board[x][y][i] == num) return false;
 
         return true;
     }
 
     static void printBoard() {
-        for (int r = 0; r < N; r++) {
-            for (int d = 0; d < N; d++) {
-                System.out.print(board[r][d]);
-                System.out.print(" ");
+        for (int z = 0; z < SIZE; z++) {
+            System.out.println("Layer z = " + z + ":");
+            for (int y = 0; y < SIZE; y++) {
+                for (int x = 0; x < SIZE; x++) {
+                    System.out.print(board[x][y][z] + " ");
+                }
+                System.out.println();
             }
             System.out.println();
         }
